@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Slip Gaji Saya</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <nav class="sidebar">
+            <h2>Panel Karyawan</h2>
+            <ul>
+                <li><a href="dashboard.html">Presensi Wajah</a></li>
+                <li><a href="slip_gaji.html"><b>Lihat Slip Gaji</b></a></li>
+            </ul>
+            <a href="index.html" class="btn btn-logout" style="text-align:center;">Logout</a>
+        </nav>
+        <main class="content">
+            <h1>Rincian Gaji Bulanan</h1>
+            <div class="card">
+                <h3>Periode: Maret 2026</h3>
+                <p>Nama: Vincentius Gigih</p>
+                <hr>
+                <table>
+                    <thead>
+                        <tr><th>Keterangan</th><th>Jumlah</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Gaji Pokok</td><td>Rp 8.000.000</td></tr>
+                        <tr><td>Tunjangan Kehadiran (Otomatis)</td><td>Rp 500.000</td></tr>
+                        <tr><td>Potongan Pajak/BPJS</td><td>(Rp 250.000)</td></tr>
+                        <tr style="font-weight: bold; background: #eee;"><td>Total Gaji Bersih</td><td>Rp 8.250.000</td></tr>
+                    </tbody>
+                </table>
+                <br>
+                <button class="btn btn-primary" onclick="window.print()">Cetak Slip Gaji</button>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Enrollment</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <nav class="sidebar">
+            <h2>Admin HRD</h2>
+            <ul>
+                <li><a href="admin.html"><b>Enrollment Karyawan</b></a></li>
+                <li><a href="#">Laporan Absensi</a></li>
+                <li><a href="#">Kelola Payroll</a></li>
+            </ul>
+            <a href="index.html" class="btn btn-logout" style="text-align:center;">Logout</a>
+        </nav>
+        <main class="content">
+            <h1>Pendaftaran Karyawan Baru</h1>
+            <div class="card" style="display: flex; gap: 30px;">
+                <div style="flex: 1;">
+                    <label>Nomor Induk Karyawan (NIK)</label>
+                    <input type="text" placeholder="Contoh: 2602100XXX" style="width:100%; padding:10px; margin: 10px 0;">
+                    <label>Nama Lengkap</label>
+                    <input type="text" placeholder="Nama Karyawan" style="width:100%; padding:10px; margin: 10px 0;">
+                    <button class="btn btn-success" id="btn-enroll" style="width:100%; margin-top:20px;">Ambil Sampel Wajah</button>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <video id="admin-video" autoplay muted style="max-height: 250px;"></video>
+                    <p id="enroll-status">Status Kamera: Aktif</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="camera.js"></script>
+    <script>
+        initCamera('admin-video');
+        document.getElementById('btn-enroll').onclick = () => {
+            const status = document.getElementById('enroll-status');
+            status.innerText = "Mengekstraksi 128 vektor unik (HOG)...";
+            status.style.color = "blue";
+            setTimeout(() => {
+                status.innerText = "Data Wajah Berhasil Disimpan!";
+                status.style.color = "green";
+                alert("Pendaftaran Berhasil.");
+            }, 2000);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+:root {
+    --primary: #2c3e50;
+    --secondary: #3498db;
+    --success: #27ae60;
+    --danger: #e74c3c;
+    --light: #f4f7f6;
+}
+
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--light); display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Layout Utama */
+.wrapper { display: flex; flex: 1; }
+.sidebar { width: 250px; background: var(--primary); color: white; padding: 20px; }
+.sidebar h2 { font-size: 1.2rem; border-bottom: 1px solid #555; padding-bottom: 10px; }
+.sidebar ul { list-style: none; padding: 0; }
+.sidebar ul li { margin: 15px 0; }
+.sidebar a { color: white; text-decoration: none; display: block; padding: 10px; border-radius: 5px; }
+.sidebar a:hover { background: var(--secondary); }
+
+.content { flex: 1; padding: 30px; }
+.card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+/* Tombol & Status */
+.btn { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.btn-primary { background: var(--secondary); color: white; }
+.btn-success { background: var(--success); color: white; }
+.btn-logout { background: var(--danger); color: white; margin-top: 20px; }
+
+video { width: 100%; max-width: 500px; border-radius: 12px; border: 4px solid var(--primary); background: #000; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+th { background: var(--primary); color: white; }
