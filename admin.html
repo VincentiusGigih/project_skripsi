@@ -18,17 +18,40 @@
         </nav>
         <main class="content">
             <h1>Pendaftaran Karyawan Baru</h1>
-            <div class="card" style="display: flex; gap: 30px;">
-                <div style="flex: 1;">
+            <div class="card">
+                <div style="margin-bottom: 20px;">
                     <label>Nomor Induk Karyawan (NIK)</label>
-                    <input type="text" placeholder="Contoh: 2602100XXX" style="width:100%; padding:10px; margin: 10px 0;">
+                    <input type="text" placeholder="Contoh: 2602100XXX" style="width:100%; padding:10px; margin-bottom: 15px;">
                     <label>Nama Lengkap</label>
-                    <input type="text" placeholder="Nama Karyawan" style="width:100%; padding:10px; margin: 10px 0;">
-                    <button class="btn btn-success" id="btn-enroll" style="width:100%; margin-top:20px;">Ambil Sampel Wajah</button>
+                    <input type="text" placeholder="Nama Karyawan" style="width:100%; padding:10px;">
                 </div>
-                <div style="flex: 1; text-align: center;">
-                    <video id="admin-video" autoplay muted style="max-height: 250px;"></video>
-                    <p id="enroll-status">Status Kamera: Aktif</p>
+
+                <div class="method-toggle">
+                    <button class="btn btn-active" id="btn-mode-scan">Metode 1: Scan Wajah</button>
+                    <button class="btn btn-outline" id="btn-mode-upload">Metode 2: Upload Foto</button>
+                </div>
+
+                <div style="display: flex; gap: 30px; align-items: start;">
+                    <div style="flex: 1;">
+                        <div id="section-scan">
+                            <h3>Live Enrollment</h3>
+                            <video id="admin-video" autoplay muted style="max-height: 250px;"></video>
+                            <p id="enroll-status">Status Kamera: Aktif</p>
+                            <button class="btn btn-success" style="width:100%;" onclick="startEnrollSim()">Ambil Sampel Wajah</button>
+                        </div>
+
+                        <div id="section-upload" class="hidden">
+                            <h3>Upload Foto Karyawan</h3>
+                            <div class="preview-box" id="image-preview">
+                                <p style="color: #999;">Belum Ada Foto Terpilih</p>
+                            </div>
+                            <p style="color: #e67e22; font-size: 0.85rem; margin-top: 10px;">
+                                *Pastikan wajah terlihat jelas dari arah depan, pencahayaan cukup, dan tidak memakai masker/kacamata hitam.
+                            </p>
+                            <input type="file" id="file-input" accept="image/*" style="margin: 15px 0;" onchange="handleFilePreview(this, 'image-preview')">
+                            <button class="btn btn-success" style="width:100%;" onclick="startEnrollSim()">Simpan Data Foto</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -36,16 +59,31 @@
     <script src="camera.js"></script>
     <script>
         initCamera('admin-video');
-        document.getElementById('btn-enroll').onclick = () => {
-            const status = document.getElementById('enroll-status');
-            status.innerText = "Mengekstraksi 128 vektor unik (HOG)...";
-            status.style.color = "blue";
-            setTimeout(() => {
-                status.innerText = "Data Wajah Berhasil Disimpan!";
-                status.style.color = "green";
-                alert("Pendaftaran Berhasil.");
-            }, 2000);
+
+        // Logic Toggle Metode
+        const btnScan = document.getElementById('btn-mode-scan');
+        const btnUpload = document.getElementById('btn-mode-upload');
+        const secScan = document.getElementById('section-scan');
+        const secUpload = document.getElementById('section-upload');
+
+        btnScan.onclick = () => {
+            secScan.classList.remove('hidden');
+            secUpload.classList.add('hidden');
+            btnScan.className = 'btn btn-active';
+            btnUpload.className = 'btn btn-outline';
         };
+
+        btnUpload.onclick = () => {
+            secUpload.classList.remove('hidden');
+            secScan.classList.add('hidden');
+            btnUpload.className = 'btn btn-active';
+            btnScan.className = 'btn btn-outline';
+        };
+
+        function startEnrollSim() {
+            alert("Sistem sedang memproses identifikasi biometrik HOG 128 vektor...");
+            setTimeout(() => { alert("Pendaftaran Berhasil! Data telah disimpan ke database."); }, 1000);
+        }
     </script>
 </body>
 </html>
