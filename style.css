@@ -1,38 +1,93 @@
 :root {
     --primary: #2c3e50;
     --secondary: #3498db;
-    --success: #27ae60;
-    --danger: #e74c3c;
     --light: #f4f7f6;
+    --success: #27ae60;
 }
 
-body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--light); display: flex; flex-direction: column; min-height: 100vh; }
+/* Fix Global Box Model */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-.wrapper { display: flex; flex: 1; }
-.sidebar { width: 250px; background: var(--primary); color: white; padding: 20px; }
-.sidebar h2 { font-size: 1.2rem; border-bottom: 1px solid #555; padding-bottom: 10px; }
-.sidebar ul { list-style: none; padding: 0; }
-.sidebar ul li { margin: 15px 0; }
-.sidebar a { color: white; text-decoration: none; display: block; padding: 10px; border-radius: 5px; }
-.sidebar a:hover { background: var(--secondary); }
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background: var(--light); 
+    line-height: 1.6;
+    color: #333;
+}
 
-.content { flex: 1; padding: 30px; }
-.card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+/* Navigation */
+nav { 
+    background: var(--primary); 
+    color: white; 
+    padding: 0.8rem 5%; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    height: 70px;
+}
+nav ul { list-style: none; display: flex; gap: 20px; align-items: center; }
+nav a { color: white; text-decoration: none; font-weight: bold; }
+.nav-hidden { display: none; }
 
-/* Perbaikan untuk Toggle & Form */
-.method-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
-.hidden { display: none !important; }
-.preview-box { width: 100%; max-width: 500px; height: 300px; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #eee; overflow: hidden; }
-.preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+nav .btn-login {
+    background: var(--secondary);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
 
-.btn { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-.btn-primary { background: var(--secondary); color: white; }
-.btn-success { background: var(--success); color: white; }
-.btn-outline { background: transparent; border: 2px solid var(--secondary); color: var(--secondary); }
-.btn-active { background: var(--secondary); color: white; }
-.btn-logout { background: var(--danger); color: white; margin-top: 20px; }
+/* Layouts */
+.container { 
+    padding: 2rem 5%; 
+    text-align: center; /* Perataan teks dan inline elements ke tengah */
+}
 
-video { width: 100%; max-width: 500px; border-radius: 12px; border: 4px solid var(--primary); background: #000; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-th { background: var(--primary); color: white; }
+/* Khusus untuk Hero Section di Index agar benar-benar di tengah layar */
+.hero-section {
+    min-height: calc(100vh - 70px); /* Menghitung tinggi layar dikurangi tinggi nav */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Tengah secara vertikal */
+    align-items: center;     /* Tengah secara horizontal */
+    background: white;
+}
+
+.card { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 12px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+    margin: 20px auto; 
+    max-width: 800px; 
+    text-align: left; 
+}
+
+/* Buttons - Perbaikan agar proporsional */
+.btn-scan { 
+    background: var(--secondary); 
+    color: white; 
+    border: none; 
+    padding: 15px 40px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: 1.1rem; 
+    font-weight: bold;
+    text-decoration: none; 
+    display: inline-block; 
+    transition: 0.3s;
+    margin-top: 20px;
+}
+.btn-scan:hover { background: #2980b9; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); }
+
+.btn-block { display: block; width: 100%; }
+
+/* Form & Table Helpers */
+.form-group { margin-bottom: 15px; text-align: left; }
+label { display: block; margin-bottom: 5px; font-weight: 600; }
+input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+th { background-color: var(--primary); color: white; }

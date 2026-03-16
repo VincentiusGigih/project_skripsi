@@ -1,38 +1,80 @@
-// Inisialisasi Kamera
 const initCamera = (videoId) => {
     const video = document.getElementById(videoId);
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (video && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => { video.srcObject = stream; })
-            .catch(err => { console.error("Error Kamera: ", err); });
+            .catch(err => { console.error("Kamera Error: ", err); });
     }
 };
 
-// Simulasi Verifikasi di Dashboard (Munculkan Menu Slip Gaji)
-const simulateVerification = (statusId) => {
+const simulateVerification = async (statusId, type) => {
     const status = document.getElementById(statusId);
-    status.innerText = "Mendeteksi Wajah...";
-    setTimeout(() => {
-        status.innerText = "Liveness Check: Silakan Berkedip...";
-        setTimeout(() => {
-            status.innerText = "Verifikasi Berhasil!";
-            status.style.color = "#27ae60";
-            // Munculkan menu setelah sukses
-            const menu = document.getElementById('menu-slip-gaji');
-            if(menu) menu.classList.remove('hidden');
-        }, 2000);
-    }, 2000);
-};
+    const video = document.getElementById('video');
+    
+    if(!video) return;
 
-// Fungsi Preview untuk Upload Foto
-const handleFilePreview = (input, previewId) => {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const preview = document.getElementById(previewId);
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-        };
-        reader.readAsDataURL(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageData = canvas.toDataURL('image/jpeg');
+
+    status.innerText = "Liveness Detection (Mendeteksi Kedipan)...";
+    status.style.color = "#3498db";
+
+    try {
+        const response = await fetch('http://localhost:5000/api/v1/verify-liveness', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            const dateString = now.toLocaleDateString('id-ID');
+
+            status.innerText = "Berhasil: " + result.message;
+            status.style.color = "#27ae60";
+
+            saveAttendance(dateString, timeString, type);
+            localStorage.setItem('hasAbsen', 'true');
+            updateNavigation();
+        } else {
+            status.innerText = "Gagal: " + result.message;
+            status.style.color = "#e74c3c";
+        }
+    } catch (error) {
+        status.innerText = "Backend Offline. Gunakan simulasi lokal...";
+        status.style.color = "#f39c12";
+        // Fallback simulasi jika Flask tidak jalan
+        setTimeout(() => {
+            localStorage.setItem('hasAbsen', 'true');
+            updateNavigation();
+            status.innerText = "Verifikasi Berhasil (Simulasi Offline)";
+        }, 2000);
     }
 };
+
+const saveAttendance = (date, time, type) => {
+    let logs = JSON.parse(localStorage.getItem('attendanceLogs')) || [];
+    let todayLog = logs.find(l => l.date === date);
+    if (!todayLog) {
+        todayLog = { date: date, jamMasuk: '-', jamKeluar: '-', status: 'Hadir' };
+        logs.push(todayLog);
+    }
+    if (type === 'Masuk') todayLog.jamMasuk = time;
+    else todayLog.jamKeluar = time;
+    localStorage.setItem('attendanceLogs', JSON.stringify(logs));
+};
+
+const updateNavigation = () => {
+    const slipMenu = document.getElementById('menu-slip');
+    if (slipMenu && localStorage.getItem('hasAbsen') === 'true') {
+        slipMenu.classList.remove('nav-hidden');
+    }
+};
+
+window.onload = updateNavigation;

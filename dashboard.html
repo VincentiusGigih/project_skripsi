@@ -2,36 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Karyawan</title>
+    <title>Dashboard Absensi</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="wrapper">
-        <nav class="sidebar">
-            <h2>Panel Karyawan</h2>
-            <ul>
-                <li><a href="dashboard.html"><b>Presensi Wajah</b></a></li>
-                <li id="menu-slip-gaji" class="hidden"><a href="slip_gaji.html">Lihat Slip Gaji</a></li>
-            </ul>
-            <a href="index.html" class="btn btn-logout" style="text-align:center;">Logout</a>
-        </nav>
-        <main class="content">
-            <h1>Presensi Kehadiran</h1>
-            <div class="card">
-                <h3>Scan Wajah (Real-time)</h3>
-                <p>Pastikan wajah berada di area frame dan lakukan kedipan mata.</p>
-                <video id="video" autoplay muted></video>
-                <div style="margin-top: 15px;">
-                    <button id="btn-scan" class="btn btn-primary">Mulai Verifikasi</button>
-                    <h3 id="status" style="color: #7f8c8d;">Status: Menunggu...</h3>
-                </div>
+    <nav>
+        <div class="logo">PayrollFace</div>
+        <ul>
+            <li><a href="dashboard.html">Absensi</a></li>
+            <li><a href="rekap_kehadiran.html">Rekap</a></li>
+            <li><a href="pengajuan_cuti.html">Cuti</a></li>
+            <li id="menu-slip" class="nav-hidden"><a href="slip_gaji.html">Slip Gaji</a></li>
+            <li><a href="index.html" onclick="localStorage.removeItem('hasAbsen')">Keluar</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="card" style="text-align: center; max-width: 550px;">
+            <h2 style="margin-bottom: 20px;">Presensi Biometrik</h2>
+            <div class="form-group">
+                <select id="absensi_type">
+                    <option value="Masuk">Absensi Masuk</option>
+                    <option value="Pulang">Absensi Pulang (Keluar)</option>
+                </select>
             </div>
-        </main>
+            <video id="video" autoplay muted style="width: 100%; border-radius: 10px; background: black; margin-bottom: 15px;"></video>
+            <button id="btn-scan" class="btn-scan btn-block">Mulai Verifikasi Wajah</button>
+            <h3 id="status" style="margin-top:20px; color: #7f8c8d;">Status: Siap memindai...</h3>
+        </div>
     </div>
+
     <script src="camera.js"></script>
     <script>
         initCamera('video');
-        document.getElementById('btn-scan').onclick = () => simulateVerification('status');
+        document.getElementById('btn-scan').onclick = () => {
+            simulateVerification('status', document.getElementById('absensi_type').value);
+        };
     </script>
 </body>
 </html>

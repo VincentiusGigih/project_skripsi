@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pengajuan Cuti - PayrollFace</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">PayrollFace</div>
+        <ul>
+            <li><a href="dashboard.html">Absensi</a></li>
+            <li><a href="rekap_kehadiran.html">Rekap</a></li>
+            <li><a href="pengajuan_cuti.html">Cuti</a></li>
+            <li id="menu-slip" class="nav-hidden"><a href="slip_gaji.html">Slip Gaji</a></li>
+            <li><a href="index.html" onclick="localStorage.removeItem('hasAbsen')">Keluar</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2 style="margin-bottom: 25px; color: #2c3e50; border-bottom: 2px solid #f4f7f6; padding-bottom: 10px;">
+                Formulir Pengajuan Cuti
+            </h2>
+            
+            <div class="form-group">
+                <label for="jenis_cuti">Jenis Cuti</label>
+                <select id="jenis_cuti">
+                    <option value="Cuti Tahunan">Cuti Tahunan</option>
+                    <option value="Cuti Sakit">Cuti Sakit</option>
+                    <option value="Kepentingan Mendesak">Kepentingan Mendesak</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tgl_mulai">Tanggal Mulai</label>
+                <input type="date" id="tgl_mulai">
+            </div>
+
+            <div class="form-group">
+                <label for="alasan">Alasan Cuti</label>
+                <textarea id="alasan" placeholder="Tuliskan alasan detail pengambilan cuti Anda..."></textarea>
+            </div>
+
+            <button class="btn-scan btn-block" onclick="submitCuti()">Kirim Pengajuan ke HRD</button>
+        </div>
+
+        <div class="card" style="margin-top: 30px;">
+            <h3 style="margin-bottom: 20px; color: #2c3e50;">Riwayat Status Pengajuan</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal Pengajuan</th>
+                        <th>Jenis Cuti</th>
+                        <th>Alasan</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="list-cuti">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="camera.js"></script>
+    <script>
+        function submitCuti() {
+            const tgl = document.getElementById('tgl_mulai').value;
+            const als = document.getElementById('alasan').value;
+            const jenis = document.getElementById('jenis_cuti').value;
+
+            if(!tgl || !als) {
+                alert("Harap lengkapi tanggal dan alasan cuti!");
+                return;
+            }
+
+            const cutiBaru = {
+                id: Date.now(),
+                karyawan: "Vincentius Gigih",
+                jenis: jenis,
+                tanggal: tgl,
+                alasan: als,
+                status: "Pending"
+            };
+            
+            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+            data.push(cutiBaru);
+            localStorage.setItem('dataCuti', JSON.stringify(data));
+            
+            alert("Pengajuan Anda telah berhasil dikirim!");
+            
+            // Reset input
+            document.getElementById('alasan').value = "";
+            document.getElementById('tgl_mulai').value = "";
+            
+            loadCutiSaya();
+        }
+
+        function loadCutiSaya() {
+            const tbody = document.getElementById('list-cuti');
+            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Belum ada pengajuan cuti.</td></tr>';
+                return;
+            }
+
+            // Menampilkan data terbaru di atas
+            data.reverse();
+
+            tbody.innerHTML = data.map(c => `
+                <tr>
+                    <td>${c.tanggal}</td>
+                    <td>${c.jenis}</td>
+                    <td><small>${c.alasan}</small></td>
+                    <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Panggil fungsi saat halaman dimuat
+        loadCutiSaya();
+    </script>
+</body>
+</html>

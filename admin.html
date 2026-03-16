@@ -2,87 +2,86 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Enrollment</title>
+    <title>Admin HRD - PayrollFace</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="wrapper">
-        <nav class="sidebar">
-            <h2>Admin HRD</h2>
-            <ul>
-                <li><a href="admin.html"><b>Enrollment Karyawan</b></a></li>
-                <li><a href="#">Laporan Absensi</a></li>
-                <li><a href="#">Kelola Payroll</a></li>
-            </ul>
-            <a href="index.html" class="btn btn-logout" style="text-align:center;">Logout</a>
-        </nav>
-        <main class="content">
-            <h1>Pendaftaran Karyawan Baru</h1>
+    <nav>
+        <div class="logo">PayrollFace - Admin</div>
+        <ul>
+            <li><a href="#" onclick="showSection('enroll')">Kelola Karyawan</a></li>
+            <li><a href="#" onclick="showSection('approval')">Persetujuan Cuti</a></li>
+            <li><a href="index.html">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <section id="section-enroll">
             <div class="card">
-                <div style="margin-bottom: 20px;">
-                    <label>Nomor Induk Karyawan (NIK)</label>
-                    <input type="text" placeholder="Contoh: 2602100XXX" style="width:100%; padding:10px; margin-bottom: 15px;">
-                    <label>Nama Lengkap</label>
-                    <input type="text" placeholder="Nama Karyawan" style="width:100%; padding:10px;">
-                </div>
-
-                <div class="method-toggle">
-                    <button class="btn btn-active" id="btn-mode-scan">Metode 1: Scan Wajah</button>
-                    <button class="btn btn-outline" id="btn-mode-upload">Metode 2: Upload Foto</button>
-                </div>
-
-                <div style="display: flex; gap: 30px; align-items: start;">
+                <h2>Enrollment Karyawan Baru</h2>
+                <p style="margin-bottom: 20px; color: #666;">Daftarkan data biometrik wajah ke dalam sistem.</p>
+                <div style="display: flex; gap: 30px; align-items: flex-start;">
                     <div style="flex: 1;">
-                        <div id="section-scan">
-                            <h3>Live Enrollment</h3>
-                            <video id="admin-video" autoplay muted style="max-height: 250px;"></video>
-                            <p id="enroll-status">Status Kamera: Aktif</p>
-                            <button class="btn btn-success" style="width:100%;" onclick="startEnrollSim()">Ambil Sampel Wajah</button>
+                        <div class="form-group">
+                            <label>Nomor Induk Karyawan (NIK)</label>
+                            <input type="text" placeholder="Contoh: 2602100354">
                         </div>
-
-                        <div id="section-upload" class="hidden">
-                            <h3>Upload Foto Karyawan</h3>
-                            <div class="preview-box" id="image-preview">
-                                <p style="color: #999;">Belum Ada Foto Terpilih</p>
-                            </div>
-                            <p style="color: #e67e22; font-size: 0.85rem; margin-top: 10px;">
-                                *Pastikan wajah terlihat jelas dari arah depan, pencahayaan cukup, dan tidak memakai masker/kacamata hitam.
-                            </p>
-                            <input type="file" id="file-input" accept="image/*" style="margin: 15px 0;" onchange="handleFilePreview(this, 'image-preview')">
-                            <button class="btn btn-success" style="width:100%;" onclick="startEnrollSim()">Simpan Data Foto</button>
+                        <div class="form-group">
+                            <label>Nama Lengkap</label>
+                            <input type="text" placeholder="Contoh: Vincentius Gigih">
                         </div>
+                        <button class="btn-scan btn-block">Ambil Sampel Wajah</button>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <video id="admin-video" autoplay muted style="width: 100%; border-radius: 10px; background: black;"></video>
+                        <p id="enroll-status" style="margin-top: 10px;">Kamera Siap</p>
                     </div>
                 </div>
             </div>
-        </main>
+        </section>
+
+        <section id="section-approval" style="display:none;">
+            <div class="card">
+                <h2>Persetujuan Cuti Karyawan</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Karyawan</th>
+                            <th>Jenis Cuti</th>
+                            <th>Tanggal</th>
+                            <th>Alasan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-list-cuti"></tbody>
+                </table>
+            </div>
+        </section>
     </div>
+
     <script src="camera.js"></script>
     <script>
         initCamera('admin-video');
-
-        // Logic Toggle Metode
-        const btnScan = document.getElementById('btn-mode-scan');
-        const btnUpload = document.getElementById('btn-mode-upload');
-        const secScan = document.getElementById('section-scan');
-        const secUpload = document.getElementById('section-upload');
-
-        btnScan.onclick = () => {
-            secScan.classList.remove('hidden');
-            secUpload.classList.add('hidden');
-            btnScan.className = 'btn btn-active';
-            btnUpload.className = 'btn btn-outline';
-        };
-
-        btnUpload.onclick = () => {
-            secUpload.classList.remove('hidden');
-            secScan.classList.add('hidden');
-            btnUpload.className = 'btn btn-active';
-            btnScan.className = 'btn btn-outline';
-        };
-
-        function startEnrollSim() {
-            alert("Sistem sedang memproses identifikasi biometrik HOG 128 vektor...");
-            setTimeout(() => { alert("Pendaftaran Berhasil! Data telah disimpan ke database."); }, 1000);
+        function showSection(name) {
+            document.getElementById('section-enroll').style.display = name === 'enroll' ? 'block' : 'none';
+            document.getElementById('section-approval').style.display = name === 'approval' ? 'block' : 'none';
+            if(name === 'approval') loadAdminCuti();
+        }
+        function loadAdminCuti() {
+            const list = document.getElementById('admin-list-cuti');
+            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+            list.innerHTML = data.map(c => `
+                <tr>
+                    <td><b>${c.karyawan}</b></td>
+                    <td>${c.jenis}</td>
+                    <td>${c.tanggal}</td>
+                    <td><small>${c.alasan}</small></td>
+                    <td>
+                        <button onclick="updateCuti(${c.id}, 'Approved')" style="color:green; border:none; background:none; cursor:pointer;">Setujui</button> | 
+                        <button onclick="updateCuti(${c.id}, 'Rejected')" style="color:red; border:none; background:none; cursor:pointer;">Tolak</button>
+                    </td>
+                </tr>
+            `).join('');
         }
     </script>
 </body>

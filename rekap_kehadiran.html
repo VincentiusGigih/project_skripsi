@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Rekap Kehadiran - PayrollFace</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">PayrollFace</div>
+        <ul>
+            <li><a href="dashboard.html">Absensi</a></li>
+            <li><a href="rekap_kehadiran.html">Rekap</a></li>
+            <li><a href="pengajuan_cuti.html">Cuti</a></li>
+            <li id="menu-slip" class="nav-hidden"><a href="slip_gaji.html">Slip Gaji</a></li>
+            <li><a href="index.html" onclick="localStorage.removeItem('hasAbsen')">Keluar</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #2c3e50; border-bottom: 2px solid #f4f7f6; padding-bottom: 10px;">
+                Riwayat Kehadiran Anda
+            </h2>
+            <p style="margin-bottom: 20px; color: #666;">
+                Data di bawah ini mencatat waktu presensi berdasarkan verifikasi wajah dan deteksi kedipan (Liveness Detection).
+            </p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Jam Masuk</th>
+                        <th>Jam Keluar</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="log-table-body">
+                    </tbody>
+            </table>
+
+            <div style="margin-top: 30px; text-align: right;">
+                <button onclick="clearLogs()" style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.9rem;">
+                    🗑️ Reset Riwayat Absensi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="camera.js"></script>
+    <script>
+        function loadLogs() {
+            const tbody = document.getElementById('log-table-body');
+            let logs = JSON.parse(localStorage.getItem('attendanceLogs')) || [];
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #999; padding: 30px;">Belum ada data absensi tercatat.</td></tr>';
+                return;
+            }
+
+            // Menampilkan data terbaru di atas
+            logs.reverse();
+
+            tbody.innerHTML = logs.map(log => `
+                <tr>
+                    <td>${log.date}</td>
+                    <td style="color: #27ae60; font-weight: bold;">${log.jamMasuk}</td>
+                    <td style="color: #e67e22; font-weight: bold;">${log.jamKeluar}</td>
+                    <td><span class="badge approved">Hadir</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function clearLogs() {
+            if(confirm("Apakah Anda yakin ingin menghapus semua riwayat absensi?")) {
+                localStorage.removeItem('attendanceLogs');
+                loadLogs();
+            }
+        }
+
+        // Jalankan saat halaman dimuat
+        loadLogs();
+    </script>
+</body>
+</html>
