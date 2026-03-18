@@ -62,44 +62,35 @@
     <script src="camera.js"></script>
     <script>
         initCamera('admin-video');
-        function showSection(name) {
-            document.getElementById('section-enroll').style.display = name === 'enroll' ? 'block' : 'none';
-            document.getElementById('section-approval').style.display = name === 'approval' ? 'block' : 'none';
-            if(name === 'approval') loadAdminCuti();
+
+        async function handleEnroll() {
+            const nik = document.querySelector('input[placeholder*="NIK"]').value;
+            const nama = document.querySelector('input[placeholder*="Nama"]').value;
+            const video = document.getElementById('admin-video');
+            const canvas = document.createElement('canvas');
+            
+            if(!nik || !nama) return alert("Harap isi NIK dan Nama!");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            const res = await fetch('http://localhost:5000/api/v1/face/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nik: nik,
+                    nama: nama,
+                    gaji: 8500000, // Gaji default
+                    image: canvas.toDataURL('image/jpeg')
+                })
+            });
+            const result = await res.json();
+            alert(result.message);
         }
 
-        function loadAdminCuti() {
-            const list = document.getElementById('admin-list-cuti');
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            list.innerHTML = data.reverse().map(c => `
-                <tr>
-                    <td><b>${c.karyawan}</b></td>
-                    <td>${c.jenis}</td>
-                    <td>${c.tanggal}</td>
-                    <td>
-                        <small>${c.alasan}</small><br>
-                        ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--success); font-size:0.7rem;">[Lihat Dokumen]</a>` : ''}
-                    </td>
-                    <td>
-                        ${c.status === 'Pending' ? `
-                            <button onclick="updateCuti(${c.id}, 'Approved')" style="color:green; border:none; background:none; cursor:pointer;">Setujui</button> | 
-                            <button onclick="updateCuti(${c.id}, 'Rejected')" style="color:red; border:none; background:none; cursor:pointer;">Tolak</button>
-                        ` : `<span class="badge ${c.status.toLowerCase()}">${c.status}</span>`}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateCuti(id, status) {
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            const index = data.findIndex(item => item.id === id);
-            if (index !== -1) {
-                data[index].status = status;
-                localStorage.setItem('dataCuti', JSON.stringify(data));
-                alert("Status diperbarui!");
-                loadAdminCuti();
-            }
-        }
+        // Pasang fungsi ke tombol "Ambil Sampel Wajah"
+        document.querySelector('.btn-block').onclick = handleEnroll;
     </script>
 </body>
 </html>
