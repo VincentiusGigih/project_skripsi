@@ -16,16 +16,13 @@ def verify_liveness():
     if not image_data:
         return jsonify({"status": "error", "message": "No image data"}), 400
 
-    # Decode base64 image ke format OpenCV
     try:
         header, encoded = image_data.split(",", 1)
         nparr = np.frombuffer(base64.b64decode(encoded), np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # --- UPDATE: Mirroring Image ---
-        # Parameter 1 berarti mirroring secara horizontal (kiri-kanan)
+        # Mirroring Image
         img = cv2.flip(img, 1) 
-        # --------------------------------------------------------
         
         # Load classifier untuk deteksi wajah
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -47,6 +44,33 @@ def verify_liveness():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# API untuk pengajuan cuti
+@app.route('/api/v1/leave/request', methods=['POST'])
+def submit_leave():
+    try:
+        data = request.json
+        karyawan = data.get('karyawan')
+        jenis = data.get('jenis')
+        attachment = data.get('attachment')
+        
+        if jenis == 'Cuti Sakit' and not attachment:
+            return jsonify({"status": "error", "message": "Surat dokter wajib diunggah"}), 400
+
+        print(f"Menerima pengajuan {jenis} dari {karyawan}")
+        return jsonify({"status": "success", "message": "Pengajuan cuti berhasil dikirim"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# UPDATE: API untuk pembatalan cuti
+@app.route('/api/v1/leave/cancel', methods=['POST'])
+def cancel_leave():
+    try:
+        data = request.json
+        leave_id = data.get('leave_id')
+        print(f"Membatalkan pengajuan cuti ID: {leave_id}")
+        return jsonify({"status": "success", "message": "Pengajuan cuti berhasil dibatalkan"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == '__main__':
-    # Menjalankan server di port 5000
     app.run(debug=True, port=5000)

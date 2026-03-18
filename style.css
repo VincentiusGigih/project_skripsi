@@ -3,9 +3,11 @@
     --secondary: #3498db;
     --light: #f4f7f6;
     --success: #27ae60;
+    --danger: #e74c3c;
+    --warning: #f1c40f;
+    --grey: #95a5a6;
 }
 
-/* Fix Global Box Model */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
@@ -15,7 +17,6 @@ body {
     color: #333;
 }
 
-/* Navigation */
 nav { 
     background: var(--primary); 
     color: white; 
@@ -29,30 +30,7 @@ nav ul { list-style: none; display: flex; gap: 20px; align-items: center; }
 nav a { color: white; text-decoration: none; font-weight: bold; }
 .nav-hidden { display: none; }
 
-nav .btn-login {
-    background: var(--secondary);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-
-/* Layouts */
-.container { 
-    padding: 2rem 5%; 
-    text-align: center; /* Perataan teks dan inline elements ke tengah */
-}
-
-/* Khusus untuk Hero Section di Index agar benar-benar di tengah layar */
-.hero-section {
-    min-height: calc(100vh - 70px); /* Menghitung tinggi layar dikurangi tinggi nav */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Tengah secara vertikal */
-    align-items: center;     /* Tengah secara horizontal */
-    background: white;
-}
+.container { padding: 2rem 5%; text-align: center; }
 
 .card { 
     background: white; 
@@ -64,7 +42,6 @@ nav .btn-login {
     text-align: left; 
 }
 
-/* Buttons - Perbaikan agar proporsional */
 .btn-scan { 
     background: var(--secondary); 
     color: white; 
@@ -79,11 +56,21 @@ nav .btn-login {
     transition: 0.3s;
     margin-top: 20px;
 }
-.btn-scan:hover { background: #2980b9; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); }
-
+.btn-scan:hover { background: #2980b9; transform: translateY(-3px); }
 .btn-block { display: block; width: 100%; }
 
-/* Form & Table Helpers */
+.btn-cancel {
+    background: none;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+.btn-cancel:hover { background: var(--danger); color: white; }
+
 .form-group { margin-bottom: 15px; text-align: left; }
 label { display: block; margin-bottom: 5px; font-weight: 600; }
 input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
@@ -91,3 +78,9 @@ input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; bo
 table { width: 100%; border-collapse: collapse; margin-top: 15px; }
 th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
 th { background-color: var(--primary); color: white; }
+
+.badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: white; }
+.badge.pending { background: var(--warning); }
+.badge.approved { background: var(--success); }
+.badge.rejected { background: var(--danger); }
+.badge.cancelled { background: var(--grey); }

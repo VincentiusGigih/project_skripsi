@@ -25,11 +25,16 @@
             
             <div class="form-group">
                 <label for="jenis_cuti">Jenis Cuti</label>
-                <select id="jenis_cuti">
+                <select id="jenis_cuti" onchange="toggleUploadSurat()">
                     <option value="Cuti Tahunan">Cuti Tahunan</option>
                     <option value="Cuti Sakit">Cuti Sakit</option>
                     <option value="Kepentingan Mendesak">Kepentingan Mendesak</option>
                 </select>
+            </div>
+
+            <div id="upload-section" class="form-group" style="display: none; background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px dashed #e74c3c;">
+                <label for="surat_dokter" style="color: #e74c3c;">Upload Surat Dokter (Wajib untuk Cuti Sakit)</label>
+                <input type="file" id="surat_dokter" accept="image/*,application/pdf">
             </div>
 
             <div class="form-group">
@@ -50,28 +55,43 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Tanggal Pengajuan</th>
-                        <th>Jenis Cuti</th>
-                        <th>Alasan</th>
+                        <th>Tanggal</th>
+                        <th>Jenis</th>
+                        <th>Alasan/Dokumen</th>
                         <th>Status</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="list-cuti">
-                    </tbody>
+                <tbody id="list-cuti"></tbody>
             </table>
         </div>
     </div>
 
-    <script src="camera.js"></script>
     <script>
-        function submitCuti() {
+        function toggleUploadSurat() {
+            const jenis = document.getElementById('jenis_cuti').value;
+            const uploadSection = document.getElementById('upload-section');
+            uploadSection.style.display = (jenis === 'Cuti Sakit') ? 'block' : 'none';
+        }
+
+        async function submitCuti() {
             const tgl = document.getElementById('tgl_mulai').value;
             const als = document.getElementById('alasan').value;
             const jenis = document.getElementById('jenis_cuti').value;
+            const fileInput = document.getElementById('surat_dokter');
+            let attachmentBase64 = null;
 
             if(!tgl || !als) {
                 alert("Harap lengkapi tanggal dan alasan cuti!");
                 return;
+            }
+
+            if (jenis === 'Cuti Sakit') {
+                if (fileInput.files.length === 0) {
+                    alert("Wajib mengunggah surat dokter!");
+                    return;
+                }
+                attachmentBase64 = await toBase64(fileInput.files[0]);
             }
 
             const cutiBaru = {
@@ -80,46 +100,87 @@
                 jenis: jenis,
                 tanggal: tgl,
                 alasan: als,
+                attachment: attachmentBase64,
                 status: "Pending"
             };
-            
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            data.push(cutiBaru);
-            localStorage.setItem('dataCuti', JSON.stringify(data));
-            
-            alert("Pengajuan Anda telah berhasil dikirim!");
-            
-            // Reset input
-            document.getElementById('alasan').value = "";
-            document.getElementById('tgl_mulai').value = "";
-            
-            loadCutiSaya();
+
+            try {
+                const response = await fetch('http://localhost:5000/api/v1/leave/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cutiBaru)
+                });
+                
+                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+                data.push(cutiBaru);
+                localStorage.setItem('dataCuti', JSON.stringify(data));
+                alert("Pengajuan Berhasil!");
+                location.reload();
+            } catch (error) {
+                alert("Backend Offline. Data disimpan lokal.");
+                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+                data.push(cutiBaru);
+                localStorage.setItem('dataCuti', JSON.stringify(data));
+                location.reload();
+            }
         }
+
+        async function cancelCuti(id) {
+            if(!confirm("Yakin ingin membatalkan pengajuan ini?")) return;
+
+            try {
+                await fetch('http://localhost:5000/api/v1/leave/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leave_id: id })
+                });
+
+                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
+                const index = data.findIndex(c => c.id === id);
+                if (index !== -1) {
+                    data[index].status = "Cancelled";
+                    localStorage.setItem('dataCuti', JSON.stringify(data));
+                }
+                alert("Pengajuan dibatalkan.");
+                loadCutiSaya();
+            } catch (error) {
+                alert("Gagal menghubungi server.");
+            }
+        }
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
 
         function loadCutiSaya() {
             const tbody = document.getElementById('list-cuti');
             let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
             
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Belum ada pengajuan cuti.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #999;">Belum ada pengajuan cuti.</td></tr>';
                 return;
             }
 
-            // Menampilkan data terbaru di atas
-            data.reverse();
-
-            tbody.innerHTML = data.map(c => `
+            tbody.innerHTML = data.reverse().map(c => `
                 <tr>
                     <td>${c.tanggal}</td>
                     <td>${c.jenis}</td>
-                    <td><small>${c.alasan}</small></td>
+                    <td>
+                        <small>${c.alasan}</small><br>
+                        ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--secondary); font-size:0.7rem;">📄 Lihat Surat</a>` : ''}
+                    </td>
                     <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+                    <td>
+                        ${c.status === 'Pending' ? `<button class="btn-cancel" onclick="cancelCuti(${c.id})">Batalkan</button>` : '-'}
+                    </td>
                 </tr>
             `).join('');
         }
 
-        // Panggil fungsi saat halaman dimuat
-        loadCutiSaya();
+        window.onload = loadCutiSaya;
     </script>
 </body>
 </html>
