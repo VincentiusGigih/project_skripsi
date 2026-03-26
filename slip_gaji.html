@@ -12,27 +12,55 @@
             <li><a href="dashboard.html">Absensi</a></li>
             <li><a href="rekap_kehadiran.html">Rekap</a></li>
             <li><a href="pengajuan_cuti.html">Cuti</a></li>
-            <li id="menu-slip" class="nav-hidden"><a href="slip_gaji.html">Slip Gaji</a></li>
-            <li><a href="index.html" onclick="localStorage.removeItem('hasAbsen')">Keluar</a></li>
+            <li><a href="slip_gaji.html">Slip Gaji</a></li>
+            <li><a href="index.html">Keluar</a></li>
         </ul>
     </nav>
-    <script src="camera.js"></script>
 
     <div class="container">
         <div class="card">
             <h2>Slip Gaji Terintegrasi</h2>
-            <p>Karyawan: Vincentius Gigih</p>
-            <hr>
-            <table>
-                <tr><th>Komponen Gaji</th><th>Nilai</th></tr>
-                <tr><td>Gaji Pokok</td><td>Rp 8.000.000</td></tr>
-                <tr><td>Uang Lembur (Berdasarkan Log)</td><td>Rp 500.000</td></tr>
-                <tr><td>Potongan (BPJS/Pajak)</td><td>(Rp 250.000)</td></tr>
-                <tr style="font-weight:bold;"><td>Total Gaji Bersih</td><td>Rp 8.250.000</td></tr>
-            </table>
+            <div id="payslip-content">Memuat data gaji...</div>
             <br>
             <button onclick="window.print()" class="btn-scan">Cetak Slip Gaji</button>
         </div>
     </div>
+
+    <script>
+        async function loadSlip() {
+            const userId = localStorage.getItem('current_user_id');
+            if (!userId) {
+                document.getElementById('payslip-content').innerText = 'Silakan absensi dulu agar sistem mengenali Anda.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:5000/api/v1/employee/data/${userId}`);
+                const data = await res.json();
+
+                if (!data.user) {
+                    document.getElementById('payslip-content').innerText = 'Data karyawan tidak ditemukan.';
+                    return;
+                }
+
+                const totalGaji = data.user.gaji_pokok - 250000;
+
+                document.getElementById('payslip-content').innerHTML = `
+                    <p><b>Nama</b>: ${data.user.nama}</p>
+                    <p><b>NIK</b>: ${data.user.nik}</p>
+                    <hr>
+                    <table>
+                        <tr><th>Komponen</th><th>Nilai</th></tr>
+                        <tr><td>Gaji Pokok</td><td>Rp ${data.user.gaji_pokok.toLocaleString()}</td></tr>
+                        <tr><td>Potongan (Wajib)</td><td>(Rp 250.000)</td></tr>
+                        <tr style="font-weight:bold;"><td>Total Diterima</td><td>Rp ${totalGaji.toLocaleString()}</td></tr>
+                    </table>
+                `;
+            } catch (e) {
+                document.getElementById('payslip-content').innerText = 'Gagal memuat data. Pastikan server berjalan.';
+            }
+        }
+        window.onload = loadSlip;
+    </script>
 </body>
 </html>
