@@ -36,7 +36,8 @@
     <script>
         initCamera('video');
         document.getElementById('btn-scan').onclick = () => {
-            simulateVerification('status', document.getElementById('absensi_type').value);
+            const type = document.getElementById('absensi_type').value;
+            simulateVerification('status', type);
         };
     </script>
 </body>
