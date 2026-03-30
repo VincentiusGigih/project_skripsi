@@ -19,9 +19,10 @@
 
     <div class="container">
         <div class="card">
-            <h2 style="margin-bottom: 25px; color: #2c3e50; border-bottom: 2px solid #f4f7f6; padding-bottom: 10px;">
+            <h2 style="margin-bottom: 15px; color: #2c3e50; border-bottom: 2px solid #f4f7f6; padding-bottom: 10px;">
                 Formulir Pengajuan Cuti
             </h2>
+            <div id="cuti-user-info" style="margin-bottom:15px;color:#666;font-size:0.9rem;"></div>
             
             <div class="form-group">
                 <label for="jenis_cuti">Jenis Cuti</label>
@@ -68,6 +69,10 @@
     </div>
 
     <script>
+        function getUserId() {
+            return localStorage.getItem('current_user_id');
+        }
+
         function toggleUploadSurat() {
             const jenis = document.getElementById('jenis_cuti').value;
             const uploadSection = document.getElementById('upload-section');
@@ -75,6 +80,9 @@
         }
 
         async function submitCuti() {
+            const userId = getUserId();
+            if (!userId) { alert("Silakan absensi dulu agar sistem mengenali Anda."); return; }
+
             const tgl = document.getElementById('tgl_mulai').value;
             const als = document.getElementById('alasan').value;
             const jenis = document.getElementById('jenis_cuti').value;
@@ -94,34 +102,23 @@
                 attachmentBase64 = await toBase64(fileInput.files[0]);
             }
 
-            const cutiBaru = {
-                id: Date.now(),
-                karyawan: "Vincentius Gigih",
-                jenis: jenis,
-                tanggal: tgl,
-                alasan: als,
-                attachment: attachmentBase64,
-                status: "Pending"
-            };
-
             try {
-                const response = await fetch('http://localhost:5000/api/v1/leave/request', {
+                const res = await fetch('/api/v1/leave/request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cutiBaru)
+                    body: JSON.stringify({
+                        user_id: userId,
+                        jenis: jenis,
+                        tanggal: tgl,
+                        alasan: als,
+                        attachment: attachmentBase64
+                    })
                 });
-                
-                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-                data.push(cutiBaru);
-                localStorage.setItem('dataCuti', JSON.stringify(data));
-                alert("Pengajuan Berhasil!");
-                location.reload();
+                const result = await res.json();
+                alert(result.message);
+                loadCutiSaya();
             } catch (error) {
-                alert("Backend Offline. Data disimpan lokal.");
-                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-                data.push(cutiBaru);
-                localStorage.setItem('dataCuti', JSON.stringify(data));
-                location.reload();
+                alert("Server Offline!");
             }
         }
 
@@ -129,18 +126,11 @@
             if(!confirm("Yakin ingin membatalkan pengajuan ini?")) return;
 
             try {
-                await fetch('http://localhost:5000/api/v1/leave/cancel', {
+                await fetch('/api/v1/leave/cancel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leave_id: id })
                 });
-
-                let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-                const index = data.findIndex(c => c.id === id);
-                if (index !== -1) {
-                    data[index].status = "Cancelled";
-                    localStorage.setItem('dataCuti', JSON.stringify(data));
-                }
                 alert("Pengajuan dibatalkan.");
                 loadCutiSaya();
             } catch (error) {
@@ -155,32 +145,57 @@
             reader.onerror = error => reject(error);
         });
 
-        function loadCutiSaya() {
+        async function loadCutiSaya() {
             const tbody = document.getElementById('list-cuti');
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #999;">Belum ada pengajuan cuti.</td></tr>';
+            const userId = getUserId();
+
+            if (!userId) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">Silakan absensi dulu untuk melihat data cuti.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = data.reverse().map(c => `
-                <tr>
-                    <td>${c.tanggal}</td>
-                    <td>${c.jenis}</td>
-                    <td>
-                        <small>${c.alasan}</small><br>
-                        ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--secondary); font-size:0.7rem;">📄 Lihat Surat</a>` : ''}
-                    </td>
-                    <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
-                    <td>
-                        ${c.status === 'Pending' ? `<button class="btn-cancel" onclick="cancelCuti(${c.id})">Batalkan</button>` : '-'}
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                const res = await fetch(`/api/v1/leave/my/${userId}`);
+                const data = await res.json();
+
+                if (!data.leaves || data.leaves.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">Belum ada pengajuan cuti.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.leaves.map(c => `
+                    <tr>
+                        <td>${c.tanggal}</td>
+                        <td>${c.jenis_cuti}</td>
+                        <td>
+                            <small>${c.alasan || '-'}</small><br>
+                            ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--secondary);font-size:0.7rem;">📄 Lihat Surat</a>` : ''}
+                        </td>
+                        <td><span class="badge ${c.status.toLowerCase()}">${c.status}</span></td>
+                        <td>
+                            ${c.status === 'Pending' ? `<button class="btn-cancel" onclick="cancelCuti(${c.id})">Batalkan</button>` : '-'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#e74c3c;">Gagal memuat data. Pastikan server berjalan.</td></tr>';
+            }
         }
 
-        window.onload = loadCutiSaya;
+        async function loadUserInfo() {
+            const userId = getUserId();
+            if (!userId) return;
+            try {
+                const res = await fetch(`/api/v1/employee/data/${userId}`);
+                const data = await res.json();
+                if (data.user) {
+                    document.getElementById('cuti-user-info').innerHTML =
+                        `<b>Nama</b>: ${data.user.nama} &nbsp;|&nbsp; <b>NIK</b>: ${data.user.nik}`;
+                }
+            } catch (e) {}
+        }
+
+        window.onload = () => { loadUserInfo(); loadCutiSaya(); };
     </script>
 </body>
 </html>

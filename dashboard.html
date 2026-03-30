@@ -26,7 +26,8 @@
                     <option value="Pulang">Absensi Pulang (Keluar)</option>
                 </select>
             </div>
-            <video id="video" autoplay muted style="width: 100%; border-radius: 10px; background: black; margin-bottom: 15px;"></video>
+            <p id="camera-hint" style="font-size: 0.9rem; color: #3498db; margin-bottom: 8px;">Menghubungkan kamera...</p>
+            <video id="video" autoplay muted playsinline style="width: 100%; border-radius: 10px; background: black; margin-bottom: 15px;"></video>
             <button id="btn-scan" class="btn-scan btn-block">Mulai Verifikasi Wajah</button>
             <h3 id="status" style="margin-top:20px; color: #7f8c8d;">Status: Siap memindai...</h3>
         </div>
@@ -34,9 +35,10 @@
 
     <script src="camera.js"></script>
     <script>
-        initCamera('video');
+        initCamera('video', 'camera-hint');
         document.getElementById('btn-scan').onclick = () => {
-            simulateVerification('status', document.getElementById('absensi_type').value);
+            const type = document.getElementById('absensi_type').value;
+            simulateVerification('status', type);
         };
     </script>
 </body>

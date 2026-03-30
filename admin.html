@@ -24,17 +24,63 @@
                     <div style="flex: 1;">
                         <div class="form-group">
                             <label>Nomor Induk Karyawan (NIK)</label>
-                            <input type="text" placeholder="Contoh: 2602100354">
+                            <input type="text" id="input-nik" placeholder="Contoh: 2602100354">
                         </div>
                         <div class="form-group">
                             <label>Nama Lengkap</label>
-                            <input type="text" placeholder="Contoh: Vincentius Gigih">
+                            <input type="text" id="input-nama" placeholder="Contoh: Vincentius Gigih">
                         </div>
-                        <button class="btn-scan btn-block">Ambil Sampel Wajah</button>
+                        <div class="form-group">
+                            <label>Gaji Pokok (Rp)</label>
+                            <input type="number" id="input-gaji" placeholder="Contoh: 8500000" value="8500000">
+                        </div>
+                        <button class="btn-scan btn-block" id="btn-enroll">Ambil Sampel Wajah</button>
                     </div>
                     <div style="flex: 1; text-align: center;">
                         <video id="admin-video" autoplay muted style="width: 100%; border-radius: 10px; background: black;"></video>
-                        <p id="enroll-status" style="margin-top: 10px;">Kamera Siap</p>
+                        <p id="enroll-status" style="margin-top: 10px; color: #7f8c8d;">Menghubungkan kamera...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 30px;">
+                <h2 style="margin-bottom: 5px;">Daftar Karyawan</h2>
+                <p id="employee-count" style="color:#666;margin-bottom:15px;"></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NIK</th>
+                            <th>Nama</th>
+                            <th>Gaji Pokok</th>
+                            <th>Tgl Daftar</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Modal Edit Karyawan -->
+            <div id="edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+                <div style="background:white;padding:30px;border-radius:12px;width:100%;max-width:450px;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                    <h3 style="margin-bottom:20px;color:#2c3e50;">Edit Data Karyawan</h3>
+                    <input type="hidden" id="edit-id">
+                    <div class="form-group">
+                        <label>NIK</label>
+                        <input type="text" id="edit-nik">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="edit-nama">
+                    </div>
+                    <div class="form-group">
+                        <label>Gaji Pokok (Rp)</label>
+                        <input type="number" id="edit-gaji">
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px;">
+                        <button class="btn-scan" style="flex:1;" onclick="saveEdit()">Simpan</button>
+                        <button class="btn-cancel" style="flex:1;padding:10px;" onclick="closeModal()">Batal</button>
                     </div>
                 </div>
             </div>
@@ -61,45 +107,180 @@
 
     <script src="camera.js"></script>
     <script>
-        initCamera('admin-video');
+        initCamera('admin-video', 'enroll-status');
+
         function showSection(name) {
-            document.getElementById('section-enroll').style.display = name === 'enroll' ? 'block' : 'none';
-            document.getElementById('section-approval').style.display = name === 'approval' ? 'block' : 'none';
-            if(name === 'approval') loadAdminCuti();
+            document.getElementById('section-enroll').style.display = (name === 'enroll') ? 'block' : 'none';
+            document.getElementById('section-approval').style.display = (name === 'approval') ? 'block' : 'none';
+            if (name === 'enroll') loadEmployees();
+            if (name === 'approval') loadLeaveRequests();
         }
 
-        function loadAdminCuti() {
-            const list = document.getElementById('admin-list-cuti');
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            list.innerHTML = data.reverse().map(c => `
-                <tr>
-                    <td><b>${c.karyawan}</b></td>
-                    <td>${c.jenis}</td>
-                    <td>${c.tanggal}</td>
-                    <td>
-                        <small>${c.alasan}</small><br>
-                        ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--success); font-size:0.7rem;">[Lihat Dokumen]</a>` : ''}
-                    </td>
-                    <td>
-                        ${c.status === 'Pending' ? `
-                            <button onclick="updateCuti(${c.id}, 'Approved')" style="color:green; border:none; background:none; cursor:pointer;">Setujui</button> | 
-                            <button onclick="updateCuti(${c.id}, 'Rejected')" style="color:red; border:none; background:none; cursor:pointer;">Tolak</button>
-                        ` : `<span class="badge ${c.status.toLowerCase()}">${c.status}</span>`}
-                    </td>
-                </tr>
-            `).join('');
-        }
+        // === ENROLLMENT ===
+        async function handleEnroll() {
+            const nik = document.getElementById('input-nik').value;
+            const nama = document.getElementById('input-nama').value;
+            const gaji = document.getElementById('input-gaji').value;
 
-        function updateCuti(id, status) {
-            let data = JSON.parse(localStorage.getItem('dataCuti')) || [];
-            const index = data.findIndex(item => item.id === id);
-            if (index !== -1) {
-                data[index].status = status;
-                localStorage.setItem('dataCuti', JSON.stringify(data));
-                alert("Status diperbarui!");
-                loadAdminCuti();
+            if(!nik || !nama) return alert("Harap isi NIK dan Nama!");
+
+            const imageData = await getImageDataUrlAsync('admin-video');
+            if (!imageData) return alert("Kamera belum siap. Izinkan akses kamera dan tunggu hingga preview muncul, lalu coba lagi.");
+
+            const res = await fetch('/api/v1/face/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nik, nama, gaji: parseFloat(gaji) || 8500000, image: imageData })
+            });
+            const result = await res.json();
+            alert(result.message);
+            if (result.status === 'success') {
+                document.getElementById('input-nik').value = '';
+                document.getElementById('input-nama').value = '';
+                loadEmployees();
             }
         }
+
+        document.getElementById('btn-enroll').onclick = handleEnroll;
+
+        // === DAFTAR KARYAWAN ===
+        async function loadEmployees() {
+            const tbody = document.getElementById('employee-table-body');
+            const countEl = document.getElementById('employee-count');
+            try {
+                const res = await fetch('/api/v1/employees');
+                const data = await res.json();
+
+                countEl.innerText = `Total Karyawan: ${data.total} orang`;
+
+                if (data.total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999;">Belum ada karyawan terdaftar.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.employees.map((e, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${e.nik}</td>
+                        <td>${e.nama}</td>
+                        <td>Rp ${Number(e.gaji_pokok).toLocaleString('id-ID')}</td>
+                        <td>${e.created_at ? e.created_at.split(' ')[0] : '-'}</td>
+                        <td>
+                            <button class="btn-scan" style="padding:4px 10px;font-size:0.8rem;margin:2px;" onclick="openEdit(${e.id},'${e.nik.replace(/'/g,"\\'")}','${e.nama.replace(/'/g,"\\'")}',${e.gaji_pokok})">Edit</button>
+                            <button class="btn-cancel" style="padding:4px 10px;font-size:0.8rem;margin:2px;" onclick="deleteEmployee(${e.id},'${e.nama.replace(/'/g,"\\'")}')">Hapus</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#e74c3c;">Gagal memuat data. Pastikan server berjalan.</td></tr>';
+            }
+        }
+
+        // === EDIT KARYAWAN ===
+        function openEdit(id, nik, nama, gaji) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nik').value = nik;
+            document.getElementById('edit-nama').value = nama;
+            document.getElementById('edit-gaji').value = gaji;
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
+        async function saveEdit() {
+            const id = document.getElementById('edit-id').value;
+            const nik = document.getElementById('edit-nik').value;
+            const nama = document.getElementById('edit-nama').value;
+            const gaji = document.getElementById('edit-gaji').value;
+
+            if (!nik || !nama) return alert("NIK dan Nama wajib diisi!");
+
+            try {
+                const res = await fetch(`/api/v1/employee/update/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nik, nama, gaji_pokok: parseFloat(gaji) })
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (result.status === 'success') {
+                    closeModal();
+                    loadEmployees();
+                }
+            } catch (e) {
+                alert("Gagal menghubungi server.");
+            }
+        }
+
+        // === HAPUS KARYAWAN ===
+        async function deleteEmployee(id, nama) {
+            if (!confirm(`Yakin ingin menghapus karyawan "${nama}"? Semua data absensi dan cuti akan ikut terhapus.`)) return;
+
+            try {
+                const res = await fetch(`/api/v1/employee/delete/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                alert(result.message);
+                if (result.status === 'success') loadEmployees();
+            } catch (e) {
+                alert("Gagal menghubungi server.");
+            }
+        }
+
+        // === PERSETUJUAN CUTI ===
+        async function loadLeaveRequests() {
+            const tbody = document.getElementById('admin-list-cuti');
+            try {
+                const res = await fetch('/api/v1/leave/list');
+                const data = await res.json();
+
+                if (!data.leaves || data.leaves.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">Belum ada pengajuan cuti.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.leaves.map(c => `
+                    <tr>
+                        <td>${c.karyawan}</td>
+                        <td>${c.jenis_cuti}</td>
+                        <td>${c.tanggal}</td>
+                        <td>
+                            <small>${c.alasan || '-'}</small><br>
+                            ${c.attachment ? `<a href="${c.attachment}" target="_blank" style="color:var(--secondary);font-size:0.7rem;">📄 Lihat Surat</a>` : ''}
+                        </td>
+                        <td>
+                            ${c.status === 'Pending' ? `
+                                <button class="btn-scan" style="padding:5px 12px;font-size:0.8rem;margin:2px;" onclick="handleLeave(${c.id},'Approved')">Setujui</button>
+                                <button class="btn-cancel" style="padding:5px 12px;font-size:0.8rem;margin:2px;" onclick="handleLeave(${c.id},'Rejected')">Tolak</button>
+                            ` : `<span class="badge ${c.status.toLowerCase()}">${c.status}</span>`}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#e74c3c;">Gagal memuat data. Pastikan server berjalan.</td></tr>';
+            }
+        }
+
+        async function handleLeave(leaveId, action) {
+            const label = action === 'Approved' ? 'menyetujui' : 'menolak';
+            if (!confirm(`Yakin ingin ${label} pengajuan cuti ini?`)) return;
+
+            try {
+                await fetch('/api/v1/leave/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leave_id: leaveId, action: action })
+                });
+                alert(`Cuti berhasil di-${action.toLowerCase()}.`);
+                loadLeaveRequests();
+            } catch (e) {
+                alert("Gagal menghubungi server.");
+            }
+        }
+
+        // Load employee list on page load
+        loadEmployees();
     </script>
 </body>
 </html>
