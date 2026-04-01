@@ -18,4 +18,7 @@ RUN pip install --no-cache-dir --no-deps face-recognition==1.3.0
 
 COPY . .
 
-CMD ["/bin/sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --timeout 120 --workers 1"]
+ENV PORT=8080
+EXPOSE 8080
+
+CMD gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
