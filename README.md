@@ -67,17 +67,54 @@ pip install "setuptools<81"
 python app.py
 ```
 
-Server akan berjalan di **http://127.0.0.1:5000**. Database SQLite (`payrollface.db`) akan dibuat secara otomatis saat pertama kali dijalankan, lengkap dengan akun Admin HRD default.
+Server akan berjalan di **http://127.0.0.1:5000** (loopback) dan mendengarkan di semua antarmuka jaringan sehingga bisa diakses lewat **IP LAN** Anda, misalnya `http://192.168.x.x:5000`. Database SQLite (`payrollface.db`) akan dibuat secara otomatis saat pertama kali dijalankan, lengkap dengan akun Admin HRD default.
+
+### Akses dari jaringan LAN (IP lokal)
+
+Backend sudah dikonfigurasi dengan `host='0.0.0.0'` agar bisa diakses dari perangkat lain di Wi‑Fi yang sama.
+
+1. Jalankan `python app.py`.
+2. Cari IP komputer Anda (PowerShell): `ipconfig` → lihat **IPv4 Address** (misalnya `192.168.1.10`).
+3. Dari komputer lain / HP di jaringan yang sama, buka: `http://192.168.1.10:5000` — untuk menguji API.
+4. **Firewall Windows**: jika tidak bisa diakses, izinkan port 5000 (Inbound Rule) atau sementara matikan firewall untuk test.
+5. **Frontend**: setelah server jalan, buka **dari browser** alamat `http://<IP-PC>:5000/` (bukan membuka file `.html` langsung). Halaman dan API dilayani dari backend yang sama; panggilan API memakai path relatif `/api/v1/...` sehingga cocok untuk `localhost`, IP LAN, atau HP di jaringan yang sama.
+
+#### HTTPS — agar kamera jalan dari HP lewat IP LAN
+
+Browser memblokir kamera pada **`http://192.168.x.x`** (bukan konteks aman). Untuk uji dari HP/perangkat lain di Wi‑Fi yang sama, jalankan server dengan **HTTPS development** (sertifikat otomatis / self-signed):
+
+```bash
+pip install cryptography
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:USE_HTTPS="1"
+python app.py
+```
+
+**macOS / Linux:**
+
+```bash
+USE_HTTPS=1 python app.py
+```
+
+Lalu di HP buka **`https://<IP-PC>:5000/`** (perhatikan **https**). Browser akan memperingatkan sertifikat tidak tepercaya — itu normal untuk uji lokal; pilih **Advanced** → **Proceed to site** (nama menu bisa sedikit berbeda).
+
+Setelah itu `getUserMedia` (kamera) biasanya berfungsi di IP LAN. Tanpa HTTPS, gunakan **`http://127.0.0.1:5000`** hanya di PC yang menjalankan server.
 
 ### 4. Buka Frontend
 
-Buka file `index.html` di browser (klik kanan > Open with browser, atau gunakan Live Server extension di VS Code).
+**Disarankan:** jalankan `python app.py`, lalu di browser buka **http://127.0.0.1:5000/** (PC) atau **http://192.168.x.x:5000/** (perangkat lain di Wi‑Fi yang sama). Flask melayani halaman HTML, CSS, JS, dan API di satu alamat — tidak perlu Live Server terpisah.
+
+Jika Anda tetap membuka file `index.html` secara langsung dari folder (protokol `file://`), beberapa fitur bisa terbatas; gunakan URL di atas agar frontend dan backend satu origin.
 
 ## Panduan Penggunaan
 
 ### Alur Admin HRD
 
-1. Buka `index.html` > klik **Mulai Simulasi Sekarang**
+1. Buka **http://127.0.0.1:5000/** > klik **Mulai Simulasi Sekarang**
 2. Di halaman login, pilih **Masuk sebagai Admin HRD**
 3. Di panel admin terdapat dua menu:
 
@@ -100,7 +137,7 @@ Buka file `index.html` di browser (klik kanan > Open with browser, atau gunakan 
 
 ### Alur Karyawan
 
-1. Buka `index.html` > klik **Mulai Simulasi Sekarang**
+1. Buka **http://127.0.0.1:5000/** > klik **Mulai Simulasi Sekarang**
 2. Di halaman login, pilih **Masuk sebagai Karyawan**
 3. **Absensi** (`dashboard.html`):
    - Pilih tipe absensi: **Masuk** atau **Pulang**

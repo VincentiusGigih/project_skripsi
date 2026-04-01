@@ -38,7 +38,49 @@
                     </div>
                     <div style="flex: 1; text-align: center;">
                         <video id="admin-video" autoplay muted style="width: 100%; border-radius: 10px; background: black;"></video>
-                        <p id="enroll-status" style="margin-top: 10px;">Kamera Siap</p>
+                        <p id="enroll-status" style="margin-top: 10px; color: #7f8c8d;">Menghubungkan kamera...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 30px;">
+                <h2 style="margin-bottom: 5px;">Daftar Karyawan</h2>
+                <p id="employee-count" style="color:#666;margin-bottom:15px;"></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NIK</th>
+                            <th>Nama</th>
+                            <th>Gaji Pokok</th>
+                            <th>Tgl Daftar</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Modal Edit Karyawan -->
+            <div id="edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+                <div style="background:white;padding:30px;border-radius:12px;width:100%;max-width:450px;box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                    <h3 style="margin-bottom:20px;color:#2c3e50;">Edit Data Karyawan</h3>
+                    <input type="hidden" id="edit-id">
+                    <div class="form-group">
+                        <label>NIK</label>
+                        <input type="text" id="edit-nik">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="edit-nama">
+                    </div>
+                    <div class="form-group">
+                        <label>Gaji Pokok (Rp)</label>
+                        <input type="number" id="edit-gaji">
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:20px;">
+                        <button class="btn-scan" style="flex:1;" onclick="saveEdit()">Simpan</button>
+                        <button class="btn-cancel" style="flex:1;padding:10px;" onclick="closeModal()">Batal</button>
                     </div>
                 </div>
             </div>
@@ -107,7 +149,7 @@
 
     <script src="camera.js"></script>
     <script>
-        initCamera('admin-video');
+        initCamera('admin-video', 'enroll-status');
 
         function showSection(name) {
             document.getElementById('section-enroll').style.display = (name === 'enroll') ? 'block' : 'none';
@@ -124,10 +166,10 @@
 
             if(!nik || !nama) return alert("Harap isi NIK dan Nama!");
 
-            const imageData = getImageDataUrl('admin-video');
-            if (!imageData) return alert("Upload foto wajah terlebih dahulu!");
+            const imageData = await getImageDataUrlAsync('admin-video');
+            if (!imageData) return alert("Kamera belum siap. Izinkan akses kamera dan tunggu hingga preview muncul, lalu coba lagi.");
 
-            const res = await fetch('http://localhost:5000/api/v1/face/register', {
+            const res = await fetch('/api/v1/face/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nik, nama, gaji: parseFloat(gaji) || 8500000, image: imageData })
@@ -148,7 +190,7 @@
             const tbody = document.getElementById('employee-table-body');
             const countEl = document.getElementById('employee-count');
             try {
-                const res = await fetch('http://localhost:5000/api/v1/employees');
+                const res = await fetch('/api/v1/employees');
                 const data = await res.json();
 
                 countEl.innerText = `Total Karyawan: ${data.total} orang`;
@@ -198,7 +240,7 @@
             if (!nik || !nama) return alert("NIK dan Nama wajib diisi!");
 
             try {
-                const res = await fetch(`http://localhost:5000/api/v1/employee/update/${id}`, {
+                const res = await fetch(`/api/v1/employee/update/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nik, nama, gaji_pokok: parseFloat(gaji) })
@@ -219,7 +261,7 @@
             if (!confirm(`Yakin ingin menghapus karyawan "${nama}"? Semua data absensi dan cuti akan ikut terhapus.`)) return;
 
             try {
-                const res = await fetch(`http://localhost:5000/api/v1/employee/delete/${id}`, { method: 'DELETE' });
+                const res = await fetch(`/api/v1/employee/delete/${id}`, { method: 'DELETE' });
                 const result = await res.json();
                 alert(result.message);
                 if (result.status === 'success') loadEmployees();
@@ -232,7 +274,7 @@
         async function loadLeaveRequests() {
             const tbody = document.getElementById('admin-list-cuti');
             try {
-                const res = await fetch('http://localhost:5000/api/v1/leave/list');
+                const res = await fetch('/api/v1/leave/list');
                 const data = await res.json();
 
                 if (!data.leaves || data.leaves.length === 0) {
@@ -267,7 +309,7 @@
             if (!confirm(`Yakin ingin ${label} pengajuan cuti ini?`)) return;
 
             try {
-                await fetch('http://localhost:5000/api/v1/leave/approve', {
+                await fetch('/api/v1/leave/approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leave_id: leaveId, action: action })

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 import cv2
 import numpy as np
@@ -9,10 +9,13 @@ import os
 import face_recognition
 from datetime import datetime
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'payrollface.db')
+DB_PATH = os.path.join(ROOT_DIR, 'payrollface.db')
+
+_STATIC_EXT = {'.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.json'}
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10)
@@ -298,5 +301,45 @@ def my_leaves(user_id):
     finally:
         conn.close()
 
+
+@app.route('/')
+def serve_index():
+    return send_from_directory(ROOT_DIR, 'index.html')
+
+
+@app.route('/<path:filename>')
+def serve_frontend(filename):
+    """HTML/CSS/JS dan aset statis; API tetap di /api/v1/..."""
+    if '..' in filename or filename.startswith(('/', '\\')):
+        abort(404)
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in _STATIC_EXT:
+        abort(404)
+    full_path = os.path.normpath(os.path.join(ROOT_DIR, filename))
+    if not full_path.startswith(os.path.normpath(ROOT_DIR)):
+        abort(403)
+    if not os.path.isfile(full_path):
+        abort(404)
+    return send_from_directory(ROOT_DIR, filename)
+
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    host = os.environ.get('FLASK_HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', '5000'))
+    use_https = os.environ.get('USE_HTTPS', '').lower() in ('1', 'true', 'yes')
+
+    ssl_context = None
+    if use_https:
+        try:
+            import cryptography  # noqa: F401
+        except ImportError:
+            print('USE_HTTPS=1 membutuhkan paket cryptography. Jalankan: pip install cryptography')
+            raise SystemExit(1)
+        ssl_context = 'adhoc'
+
+    scheme = 'https' if ssl_context else 'http'
+    print(f'Server: {scheme}://0.0.0.0:{port}/  (LAN: {scheme}://<IP-PC>:{port}/ )')
+    if ssl_context:
+        print('HTTPS: browser bisa memperingatkan sertifikat uji — Advanced \u2192 Lanjutkan.')
+
+    app.run(debug=True, host=host, port=port, ssl_context=ssl_context)

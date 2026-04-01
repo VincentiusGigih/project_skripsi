@@ -103,7 +103,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/v1/leave/request', {
+                const res = await fetch('/api/v1/leave/request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -126,7 +126,7 @@
             if(!confirm("Yakin ingin membatalkan pengajuan ini?")) return;
 
             try {
-                await fetch('http://localhost:5000/api/v1/leave/cancel', {
+                await fetch('/api/v1/leave/cancel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leave_id: id })
@@ -155,7 +155,7 @@
             }
 
             try {
-                const res = await fetch(`http://localhost:5000/api/v1/leave/my/${userId}`);
+                const res = await fetch(`/api/v1/leave/my/${userId}`);
                 const data = await res.json();
 
                 if (!data.leaves || data.leaves.length === 0) {
@@ -186,7 +186,7 @@
             const userId = getUserId();
             if (!userId) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/v1/employee/data/${userId}`);
+                const res = await fetch(`/api/v1/employee/data/${userId}`);
                 const data = await res.json();
                 if (data.user) {
                     document.getElementById('cuti-user-info').innerHTML =
